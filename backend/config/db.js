@@ -5,29 +5,45 @@ const fs = require('fs');
 
 const backendRoot = path.join(__dirname, '..');
 
-function ensurePrismaGenerated() {
-  try {
-    const generatedClientDir = path.join(backendRoot, 'node_modules', '.prisma', 'client');
-    if (fs.existsSync(generatedClientDir)) {
-      return true;
-    }
-  } catch (err) {
-    // ignore
-  }
-
-  console.log('[prisma] Generated client not found — running `npx prisma generate` synchronously...');
-  const res = spawnSync('npx', ['prisma', 'generate'], { stdio: 'inherit', cwd: backendRoot });
+function runPrismaGenerateSync() {
+  console.log('[prisma-helper] Running `npx prisma generate` (sync)...');
+  const res = spawnSync('npx', ['prisma', 'generate'], {
+    stdio: 'inherit',
+    cwd: backendRoot,
+    shell: true,
+  });
 
   if (res.error) {
-    console.error('[prisma] spawn error:', res.error);
+    console.error('[prisma-helper] spawn error:', res.error);
     throw res.error;
   }
   if (res.status !== 0) {
-    throw new Error('[prisma] `prisma generate` failed with exit code ' + res.status);
+    throw new Error('[prisma-helper] `prisma generate` failed with exit code ' + res.status);
   }
+  console.log('[prisma-helper] prisma generate completed successfully.');
+}
 
-  console.log('[prisma] Generated client successfully.');
-  return true;
+function generatedClientExists() {
+  try {
+    const generatedClientDir = path.join(backendRoot, 'node_modules', '.prisma', 'client');
+    return fs.existsSync(generatedClientDir);
+  } catch (e) {
+    return false;
+  }
+}
+
+function tryRequirePrismaClient() {
+  try {
+    return require('@prisma/client');
+  } catch (err) {
+    const msg = String(err && err.message ? err.message : err);
+    if (msg.includes('@prisma/client did not initialize') || msg.includes('Cannot find module') || msg.includes('.prisma/client')) {
+      console.warn('[prisma-helper] require(@prisma/client) failed; attempting prisma generate then require again.', msg);
+      runPrismaGenerateSync();
+      return require('@prisma/client');
+    }
+    throw err;
+  }
 }
 
 let prismaInstance = null;
@@ -35,27 +51,33 @@ let prismaInstance = null;
 function getPrisma() {
   if (prismaInstance) return prismaInstance;
 
-  // Make sure generated client exists
-  ensurePrismaGenerated();
-
-  // Now require @prisma/client
-  let PrismaClient;
-  try {
-    PrismaClient = require('@prisma/client').PrismaClient;
-  } catch (err) {
-    console.error('[prisma] require(@prisma/client) failed:', err);
-    throw err;
+  // If generated client folder doesn't exist, try to generate it first (best-effort)
+  if (!generatedClientExists()) {
+    try {
+      runPrismaGenerateSync();
+    } catch (err) {
+      // if generate fails here, try require fallback below which will attempt generate again
+      console.warn('[prisma-helper] initial prisma generate attempt failed:', err && err.message ? err.message : err);
+    }
   }
 
-  // Create singleton (safe for serverless/hot reload)
-  if (globalThis.__prisma) {
-    prismaInstance = globalThis.__prisma;
+  // require @prisma/client, with fallback that will run prisma generate if require throws
+  const mod = tryRequirePrismaClient();
+
+  if (!mod || !mod.PrismaClient) {
+    throw new Error('[prisma-helper] @prisma/client loaded but PrismaClient export missing');
+  }
+  const PrismaClient = mod.PrismaClient;
+
+  // singleton pattern (works in serverless/hot reload)
+  if (global.__prisma) {
+    prismaInstance = global.__prisma;
   } else {
     prismaInstance = new PrismaClient();
-    globalThis.__prisma = prismaInstance;
+    global.__prisma = prismaInstance;
   }
 
   return prismaInstance;
 }
 
-module.exports = { getPrisma };
+module.exports = { getPrisma, runPrismaGenerateSync, generatedClientExists };
