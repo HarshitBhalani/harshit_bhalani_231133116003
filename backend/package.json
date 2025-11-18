@@ -8,6 +8,7 @@
   "start": "node server.js",
   "prisma:generate": "prisma generate",
   "prisma:migrate": "prisma migrate dev --name init",
+  "postinstall": "prisma generate",
   "seed": "node seed/seed.mongo.js && node seed/seed.sql.js",
    "seed:mongo": "node seed/seed.mongo.js",
   "test": "cross-env NODE_ENV=test jest --runInBand"
