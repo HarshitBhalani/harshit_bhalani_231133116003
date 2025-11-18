@@ -149,9 +149,11 @@ Path	Description
 Frontend (Vercel): https://<your-frontend>.vercel.app
 Backend (Render):  https://<your-backend>.onrender.com
 
-##h. Admin Login Credentials (For Evaluation)
+##h. Admin Login Credentials (For Evaluation) ADMIN CREDENTIALS
+```
 Email: admin@example.com
 Password: Admin@123
+```
 
 ###i. Folder Structure
 ```
