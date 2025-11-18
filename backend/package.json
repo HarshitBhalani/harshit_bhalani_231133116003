@@ -6,11 +6,9 @@
   "scripts": {
     "dev": "nodemon server.js",
     "start": "node server.js",
-    "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev --name init",
-    "postinstall": "prisma generate",
-    "seed": "node seed/seed.mongo.js && node seed/seed.sql.js",
-    "seed:mongo": "node seed/seed.mongo.js",
+    "prisma:generate": "npx prisma generate",
+    "prisma:migrate": "npx prisma migrate deploy",
+    "postinstall": "npx prisma generate",
     "test": "cross-env NODE_ENV=test jest --runInBand"
   },
   "keywords": [],
@@ -23,6 +21,7 @@
     "cross-env": "^10.1.0",
     "jest": "^30.2.0",
     "nodemon": "^3.1.11",
+    "prisma": "^6.19.0",
     "supertest": "^7.1.4"
   },
   "dependencies": {
@@ -33,7 +32,6 @@
     "express-validator": "^7.3.0",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.20.0",
-    "prisma": "^6.19.0"
+    "mongoose": "^8.20.0"
   }
 }
