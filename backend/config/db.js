@@ -44,9 +44,14 @@ async function initDatabases() {
   // If running in production (or on Render) disallow localhost URIs — they won't work on the host.
   const isProdHost = process.env.NODE_ENV === 'production' || !!process.env.RENDER;
   if (isProdHost && /(^mongodb:\/\/localhost|127\.0\.0\.1|::1)/i.test(mongoUri)) {
-    const e = new Error('MONGO_URI appears to point to localhost. On Render (or in production) you must provide a network-accessible MongoDB connection string (for example MongoDB Atlas). Set the MONGO_URI environment variable in your Render dashboard to a remote MongoDB URI.');
-    console.error('[db] ' + e.message);
-    throw e;
+    // Allow an explicit bypass for advanced users (not recommended).
+    if (process.env.ALLOW_LOCAL_MONGO === 'true') {
+      console.warn('[db] Warning: MONGO_URI points to localhost but ALLOW_LOCAL_MONGO=true — proceeding anyway (NOT recommended for production)');
+    } else {
+      const e = new Error('MONGO_URI appears to point to localhost. On Render (or in production) you must provide a network-accessible MongoDB connection string (for example MongoDB Atlas). Set the MONGO_URI environment variable in your Render dashboard to a remote MongoDB URI.');
+      console.error('[db] ' + e.message);
+      throw e;
+    }
   }
 
   try {
