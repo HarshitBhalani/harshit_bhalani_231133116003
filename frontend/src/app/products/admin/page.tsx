@@ -93,9 +93,8 @@ export default function AdminProductsPage() {
     <main className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl">Admin Dashboard</h1>
-        <div className="flex items-center gap-3">
+        <div>
           <button onClick={() => setShowCreateModal(true)} className="px-4 py-2 bg-indigo-600 text-white rounded" style={{backgroundColor:'#14B8A6'}}>+ Add New</button>
-          <Link href="/products/admin/create" className="px-3 py-2 border rounded">Open Create Page</Link>
         </div>
       </div>
 
