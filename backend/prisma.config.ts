@@ -5,6 +5,11 @@ export default defineConfig({
   migrations: {
     path: "prisma/migrations",
   },
+  generator: {
+    name: "client",
+    provider: "prisma-client-js",
+    output: "./generated/prisma",
+  },
   engine: "classic",
   datasource: {
     url: env("DATABASE_URL"),
