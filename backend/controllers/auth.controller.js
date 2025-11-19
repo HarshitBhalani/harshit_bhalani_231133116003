@@ -64,8 +64,18 @@ async function register(req, res) {
       },
     });
 
-    // return safe user (no password)
-    return res.status(201).json({ user: safeUser(newUser) });
+    // sign token
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      console.error('[auth.register] JWT_SECRET not set');
+      return res.status(500).json({ message: 'Server configuration error.' });
+    }
+    const expiresIn = process.env.JWT_EXPIRES_IN || '7d';
+    const payload = { id: newUser.id, role: newUser.role, name: newUser.name, email: newUser.email };
+    const token = jwt.sign(payload, secret, { expiresIn });
+
+    // return safe user + token
+    return res.status(201).json({ token, user: safeUser(newUser) });
   } catch (err) {
     console.error('[auth.register] error:', err);
     // If getPrisma threw a meaningful error, include guidance but don't leak secrets
@@ -107,7 +117,7 @@ async function login(req, res) {
       return res.status(500).json({ message: 'Server configuration error.' });
     }
     const expiresIn = process.env.JWT_EXPIRES_IN || '7d';
-    const payload = { userId: user.id, role: user.role, name: user.name, email: user.email };
+    const payload = { id: user.id, role: user.role, name: user.name, email: user.email };
     const token = jwt.sign(payload, secret, { expiresIn });
 
     // return token + safe user
@@ -142,7 +152,7 @@ async function me(req, res) {
 
     const payload = jwt.verify(token, secret);
     const prisma = getPrisma();
-    const user = await prisma.user.findUnique({ where: { id: payload.userId } });
+    const user = await prisma.user.findUnique({ where: { id: payload.id } });
     if (!user) return res.status(404).json({ message: 'User not found.' });
     return res.json({ user: safeUser(user) });
   } catch (err) {

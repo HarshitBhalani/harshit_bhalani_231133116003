@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { isRequired, isEmail, minLength, passwordStrength } from '@/lib/validation';
+import { setToken } from '../../../../lib/auth';
 
 type FormState = {
   name: string;
@@ -56,8 +57,15 @@ export default function RegisterPage() {
         return;
       }
 
-      alert('Registered successfully — please login.');
-      router.push('/auth/login');
+      const data = await res.json();
+      if (data.token) {
+        setToken(data.token);
+        alert('Registered successfully!');
+        router.push('/products');
+      } else {
+        alert('Registered successfully — please login.');
+        router.push('/auth/login');
+      }
     } catch (err) {
       console.error(err);
       alert('Network error. Try again.');
