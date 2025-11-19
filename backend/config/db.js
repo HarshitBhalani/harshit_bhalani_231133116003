@@ -32,32 +32,17 @@ function generatedClientExists() {
   }
 }
 
-// Try to require @prisma/client from the backend's own node_modules first,
-// then fall back to normal require if that fails.
+// Simply require @prisma/client
 function tryRequirePrismaClientLocalFirst() {
-  const localPkgPath = path.join(backendRoot, 'node_modules', '@prisma', 'client');
-  try {
-    if (fs.existsSync(localPkgPath)) {
-      // require using explicit path to ensure we load the backend-local package
-      const mod = require(localPkgPath);
-      return mod;
-    }
-  } catch (err) {
-    console.warn('[prisma-helper] require from backend node_modules failed:', err && err.message ? err.message : err);
-    // fallthrough to try global require
-  }
-
-  // fallback: try normal require (may resolve to parent/global)
   try {
     return require('@prisma/client');
   } catch (err) {
     const msg = String(err && err.message ? err.message : err);
     // If it's a "not generated" kind of error, run generate and try again
     if (msg.includes('@prisma/client did not initialize') || msg.includes('Cannot find module') || msg.includes('.prisma/client')) {
-      console.warn('[prisma-helper] global require failed with message that suggests missing generated client. Attempting prisma generate and require again.');
+      console.warn('[prisma-helper] require failed - client not initialized. Attempting prisma generate and trying again.');
       runPrismaGenerateSync();
-      // After generating, attempt to require from backend node_modules explicitly
-      return require(localPkgPath);
+      return require('@prisma/client');
     }
     throw err;
   }
