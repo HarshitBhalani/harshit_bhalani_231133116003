@@ -53,8 +53,9 @@ export default function EditProductPage() {
           router.replace('/products');
           return;
         }
-        const me = await meRes.json();
-        if (me.role !== 'admin') {
+        const meBody = await meRes.json();
+        const me = meBody?.user ?? meBody;
+        if (!me || me.role !== 'admin') {
           router.replace('/products');
           return;
         }
@@ -85,6 +86,7 @@ export default function EditProductPage() {
           category: p.category ?? '',
           description: p.description ?? '',
           stock: String(p.stock ?? '0'),
+          image: p.image ?? '',
         });
       } catch (err) {
         console.error('Fetch product error', err);
@@ -175,6 +177,8 @@ export default function EditProductPage() {
         <input className="w-full px-3 py-2 border rounded" value={form.category} onChange={(e)=>setForm({...form, category: e.target.value})} placeholder="Category" />
 
         <textarea className="w-full px-3 py-2 border rounded" rows={4} value={form.description} onChange={(e)=>setForm({...form, description: e.target.value})} placeholder="Description" />
+
+        {/* Image removed per requirement - no image field for admin forms */}
 
         <div className="flex justify-between">
           <button type="button" onClick={()=>router.push('/products/admin')} className="px-4 py-2 border rounded">Cancel</button>

@@ -32,8 +32,9 @@ export default function CreateProductPage() {
 
       if (!meRes.ok) return router.replace('/products');
 
-      const me = await meRes.json();
-      if (me.role !== 'admin') return router.replace('/products');
+      const meBody = await meRes.json();
+      const me = meBody?.user ?? meBody;
+      if (!me || me.role !== 'admin') return router.replace('/products');
 
       setChecking(false);
     }
@@ -43,6 +44,12 @@ export default function CreateProductPage() {
   const handleSubmit = async (e: any) => {
     e.preventDefault();
     setSaving(true);
+
+    // basic validation
+    if (!form.sku.trim()) { alert('SKU is required'); setSaving(false); return; }
+    if (!form.name.trim()) { alert('Name is required'); setSaving(false); return; }
+    if (!form.price || Number(form.price) <= 0) { alert('Price must be greater than 0'); setSaving(false); return; }
+    if (Number(form.stock) < 0) { alert('Stock cannot be negative'); setSaving(false); return; }
 
     const token = getToken();
 
@@ -64,12 +71,6 @@ export default function CreateProductPage() {
       setSaving(false);
       return;
     }
-
-    alert('Product created successfully!');
-    router.push('/products/admin');
-  };
-
-  if (checking) return <div className="p-6">Checking admin...</div>;
 
   return (
     <div className="max-w-xl mx-auto bg-white p-6 rounded shadow mt-6">
@@ -104,6 +105,13 @@ export default function CreateProductPage() {
           placeholder="Category"
           value={form.category}
           onChange={(e) => setForm({ ...form, category: e.target.value })}
+        />
+
+        <input
+          className="w-full border px-3 py-2 rounded"
+          placeholder="Image URL"
+          value={form.image}
+          onChange={(e) => setForm({ ...form, image: e.target.value })}
         />
 
         <textarea
