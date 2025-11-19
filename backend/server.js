@@ -21,11 +21,15 @@ async function start() {
     // now require routes (controllers will use getPrisma())
     const authRoutes = require('./routes/auth.routes');
     const adminRoutes = require('./routes/admin.routes');
+    const reportRoutes = require('./routes/report.routes');
     const productRoutes = require('./routes/product.routes');
+    const orderRoutes = require('./routes/order.routes');
 
     app.use('/api/auth', authRoutes);
     app.use('/api/admin', adminRoutes);
+    app.use('/api/reports', reportRoutes);
     app.use('/api/products', productRoutes);
+    app.use('/api/orders', orderRoutes);
 
     const PORT = process.env.PORT || 4000;
     app.listen(PORT, () => {
