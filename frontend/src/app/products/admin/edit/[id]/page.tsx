@@ -21,6 +21,7 @@ export default function EditProductPage() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [accessDenied, setAccessDenied] = useState(false);
   const [form, setForm] = useState<FormState>({
     sku: '',
     name: '',
@@ -41,7 +42,9 @@ export default function EditProductPage() {
 
       const token = getToken();
       if (!token) {
-        router.replace('/products');
+        // avoid immediate redirect flicker — show access denied message
+        setAccessDenied(true);
+        setLoading(false);
         return;
       }
 
@@ -49,19 +52,21 @@ export default function EditProductPage() {
       try {
         const meRes = await fetch(`${API}/api/auth/me`, { headers: { Authorization: `Bearer ${token}` }});
         if (!meRes.ok) {
-          console.warn('auth/me failed', meRes.status);
-          router.replace('/products');
+          setAccessDenied(true);
+          setLoading(false);
           return;
         }
         const meBody = await meRes.json();
         const me = meBody?.user ?? meBody;
         if (!me || me.role !== 'admin') {
-          router.replace('/products');
+          setAccessDenied(true);
+          setLoading(false);
           return;
         }
       } catch (err) {
         console.error('verify error', err);
-        router.replace('/products');
+        setAccessDenied(true);
+        setLoading(false);
         return;
       }
 
@@ -159,6 +164,16 @@ export default function EditProductPage() {
   }
 
   if (loading) return <div className="p-6">Loading product…</div>;
+  if (accessDenied) return (
+    <div className="p-6 max-w-lg mx-auto text-center bg-white rounded shadow">
+      <h3 className="text-xl font-semibold mb-2">Access denied</h3>
+      <p className="text-gray-600 mb-4">You must be an authenticated admin to edit products.</p>
+      <div className="flex justify-center gap-3">
+        <button onClick={() => router.push('/auth/login')} className="px-4 py-2 bg-indigo-600 text-white rounded" style={{backgroundColor:'#14B8A6'}}>Login</button>
+        <button onClick={() => router.push('/products')} className="px-4 py-2 border rounded">Back to products</button>
+      </div>
+    </div>
+  );
 
   return (
     <div className="max-w-xl mx-auto bg-white p-6 rounded shadow mt-6">
