@@ -71,6 +71,18 @@ export default function CreateProductPage() {
       setSaving(false);
       return;
     }
+    // success
+    try {
+      const body = await res.json().catch(()=>null);
+      setSaving(false);
+      alert('Product created successfully');
+      router.push('/products/admin');
+    } catch (err) {
+      setSaving(false);
+      alert('Product created');
+      router.push('/products/admin');
+    }
+  };
 
   return (
     <div className="max-w-xl mx-auto bg-white p-6 rounded shadow mt-6">
@@ -107,12 +119,7 @@ export default function CreateProductPage() {
           onChange={(e) => setForm({ ...form, category: e.target.value })}
         />
 
-        <input
-          className="w-full border px-3 py-2 rounded"
-          placeholder="Image URL"
-          value={form.image}
-          onChange={(e) => setForm({ ...form, image: e.target.value })}
-        />
+        {/* image removed per requirement */}
 
         <textarea
           className="w-full border px-3 py-2 rounded"
@@ -150,4 +157,5 @@ export default function CreateProductPage() {
       </form>
     </div>
   );
+}
 }
