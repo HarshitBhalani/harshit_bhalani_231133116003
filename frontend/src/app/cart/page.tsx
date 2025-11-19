@@ -69,7 +69,7 @@ export default function CartPage() {
         headers,
         body: JSON.stringify({ items: cart })
       });
-      alert('Order created: ' + res.id);
+      alert('Your order has been placed' + (res?.id ? ` (Order #${res.id})` : ''));
       localStorage.removeItem('cart');
       setCart([]);
       setDetails({});

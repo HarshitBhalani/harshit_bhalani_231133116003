@@ -87,7 +87,7 @@ export default function LoginPage() {
               localStorage.removeItem('pending_checkout');
               localStorage.removeItem('cart');
               window.dispatchEvent(new Event('storage'));
-              alert('Order created: ' + (body.id || '')); 
+              alert('Your order has been placed' + (body?.id ? ` (Order #${body.id})` : ''));
               router.replace('/orders');
               return;
             } else {
