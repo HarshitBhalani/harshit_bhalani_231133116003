@@ -8,6 +8,8 @@
     "start": "node server.js",
     "prisma:generate": "npx prisma generate",
     "prisma:migrate": "npx prisma migrate deploy",
+    "seed:admin": "node seed/seed.admin.js",
+    "seed:products": "node seed/seed.mongo.js",
     "postinstall": "npx prisma generate",
     "test": "cross-env NODE_ENV=test jest --runInBand"
   },

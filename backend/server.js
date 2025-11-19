@@ -1,54 +1,43 @@
 // backend/server.js
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const bodyParser = require('body-parser');
+const helmet = require('helmet');
 
-const { getPrisma } = require('./config/db'); // robust helper
-const app = express();
+const { initDatabases } = require('./config/db');
 
-// initialize Prisma early (will generate client if needed)
-let prisma;
-try {
-  prisma = getPrisma();
-  console.log('[server] Prisma initialized successfully.');
-} catch (err) {
-  console.error('[server] Prisma initialization failed:', err && err.message ? err.message : err);
-  throw err; // let process crash so Render logs show failure
-}
+async function start() {
+  try {
+    console.log('[server] Initializing databases...');
+    const mongoUri = process.env.MONGO_URI;
+    await initDatabases({ mongoUri });
+    console.log('[server] Databases initialized.');
 
-// optional: init mongo connection if you have config/mongo.js
-try {
-  const { connectMongo } = require('./config/mongo');
-  if (typeof connectMongo === 'function') {
-    connectMongo().catch(e => console.error('[server] Mongo connect failed:', e && e.message ? e.message : e));
+    const app = express();
+    app.use(cors());
+    app.use(express.json());
+    app.use(helmet());
+
+    // now require routes (controllers will use getPrisma())
+    const authRoutes = require('./routes/auth.routes');
+    const adminRoutes = require('./routes/admin.routes');
+    const productRoutes = require('./routes/product.routes');
+
+    app.use('/api/auth', authRoutes);
+    app.use('/api/admin', adminRoutes);
+    app.use('/api/products', productRoutes);
+
+    const PORT = process.env.PORT || 4000;
+    app.listen(PORT, () => {
+      console.log(`[server] listening on port ${PORT}`);
+    });
+
+  } catch (err) {
+    // fail fast with readable message (useful in logs)
+    console.error('[server] Fatal startup error:', err);
+    // crash process so hosting shows failure
+    throw err;
   }
-} catch (e) {
-  // no mongo file or other; continue
 }
 
-app.use(cors({ origin: process.env.FRONTEND_ORIGIN || '*' }));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-
-// register routes (make sure route files use getPrisma() rather than new PrismaClient())
-app.use('/api/auth', require('./routes/auth.routes'));
-app.use('/api/products', require('./routes/product.routes'));
-app.use('/api/orders', require('./routes/order.routes'));
-app.use('/api/reports', require('./routes/report.routes'));
-
-app.get('/', (req, res) => {
-  res.send('backend by developer-harshit is running...');
-});
-
-// error middleware if present
-try {
-  const errorMiddleware = require('./middlewares/error.middleware');
-  if (typeof errorMiddleware === 'function') app.use(errorMiddleware);
-} catch (e) { /* ignore if missing */ }
-
-const port = process.env.PORT || 4000;
-app.listen(port, () => {
-  console.log(`[server] Backend listening on port ${port}`);
-});
-
-module.exports = app;
+start();
