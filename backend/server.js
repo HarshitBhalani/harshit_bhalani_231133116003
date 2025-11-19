@@ -36,6 +36,10 @@ app.use('/api/products', require('./routes/product.routes'));
 app.use('/api/orders', require('./routes/order.routes'));
 app.use('/api/reports', require('./routes/report.routes'));
 
+app.get('/', (req, res) => {
+  res.send('backend by developer-harshit is running...');
+});
+
 // error middleware if present
 try {
   const errorMiddleware = require('./middlewares/error.middleware');
