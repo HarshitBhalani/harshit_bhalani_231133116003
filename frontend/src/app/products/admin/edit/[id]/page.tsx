@@ -91,7 +91,6 @@ export default function EditProductPage() {
           category: p.category ?? '',
           description: p.description ?? '',
           stock: String(p.stock ?? '0'),
-          image: p.image ?? '',
         });
       } catch (err) {
         console.error('Fetch product error', err);
@@ -154,7 +153,8 @@ export default function EditProductPage() {
       let body: any = '';
       try { body = await res.json(); } catch { body = await res.text().catch(() => ''); }
       console.error('Update failed', { status: res.status, body });
-      alert(`Update failed (status ${res.status})\n\n${JSON.stringify(body)}`);
+      const msg = (body && body.message) ? body.message : (`Update failed (status ${res.status})`);
+      alert(msg);
     } catch (err: any) {
       console.error('Update error', err);
       alert('Update failed: ' + (err.message || String(err)));
