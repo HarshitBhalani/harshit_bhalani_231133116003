@@ -152,8 +152,8 @@ npm run test
 
 ## Deployment URLs
 
-- **Frontend (Vercel):** `[https://harshit-bhalani-231133116003.vercel.app](https://harshit-bhalani-231133116003.vercel.app/)`
-- **Backend (Render):** `[https://harshit-bhalani-231133116003.onrender.com](https://harshit-bhalani-231133116003.onrender.com)`
+- **Frontend (Vercel)**: https://harshit-bhalani-231133116003.vercel.app
+- **Backend (Render):** https://harshit-bhalani-231133116003.onrender.com
 
 ## Admin Login Credentials (For Evaluation)
 
