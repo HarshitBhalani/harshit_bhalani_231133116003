@@ -44,8 +44,9 @@ export default function Navbar() {
             setUser(null);
             return;
           }
-          const me = await res.json();
-          setUser(me); // { id, email, name, role }
+          const meBody = await res.json();
+          const meUser = meBody?.user ?? meBody;
+          setUser(meUser); // { id, email, name, role }
         } catch (err) {
           console.error('verify error', err);
           removeToken();
@@ -95,7 +96,9 @@ export default function Navbar() {
             </>
           )}
 
-          <Link href="/reports" className="text-sm">Reports</Link>
+          {isAdmin && (
+            <Link href="/reports" className="text-sm">Reports</Link>
+          )}
 
           {/* Admin dashboard link only for admin */}
           {isAdmin && (

@@ -1,6 +1,7 @@
 // frontend/src/app/cart/page.tsx
 'use client';
 import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { api } from '../../../lib/api';
 
 type CartItem = { productId: string; quantity: number };
@@ -54,8 +55,15 @@ export default function CartPage() {
       if (!cart.length) return alert('Cart is empty');
       setLoading(true);
       const token = localStorage.getItem('token') || '';
+      if (!token) {
+        // save pending checkout and prompt user to login/register
+        localStorage.setItem('pending_checkout', JSON.stringify(cart));
+        setShowLoginModal(true);
+        return;
+      }
+
       const headers: any = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
+      headers['Authorization'] = `Bearer ${token}`;
       const res = await api('/api/orders/checkout', {
         method: 'POST',
         headers,
@@ -72,6 +80,9 @@ export default function CartPage() {
       setLoading(false);
     }
   }
+
+  const router = useRouter();
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   const grandTotal = cart.reduce((sum, it) => {
     const p = details[it.productId];
@@ -136,6 +147,20 @@ export default function CartPage() {
             </div>
           </div>
         </>
+      )}
+      {/* Login/Register modal shown when attempting checkout while not authenticated */}
+      {showLoginModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded shadow max-w-sm w-full">
+            <h3 className="text-lg font-semibold mb-2">Please sign in</h3>
+            <p className="text-sm text-gray-600 mb-4">You need to register or login before checking out.</p>
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => { setShowLoginModal(false); }} className="px-3 py-2 border rounded">Cancel</button>
+              <button onClick={() => { router.push('/auth/register'); }} className="px-3 py-2 bg-gray-200 rounded">Register</button>
+              <button onClick={() => { router.push('/auth/login'); }} className="px-3 py-2 bg-indigo-600 text-white rounded" style={{backgroundColor:'#14B8A6'}}>Login</button>
+            </div>
+          </div>
+        </div>
       )}
     </section>
   );

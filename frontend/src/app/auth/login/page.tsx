@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { setToken } from '../../../../lib/auth';
+import { getUser } from '../../../../lib/auth';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -12,6 +13,14 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPwd, setShowPwd] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // If already logged-in admin, redirect to admin dashboard
+  useEffect(() => {
+    try {
+      const u = getUser();
+      if (u && u.role === 'admin') router.replace('/products/admin');
+    } catch (err) {}
+  }, [router]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -35,6 +44,13 @@ export default function LoginPage() {
       // 2) store token immediately (so other calls can use it)
       setToken(loginData.token);
 
+      // If backend provided user info in login response, use it to route quickly
+      const loginUser = loginData.user ?? null;
+      if (loginUser && loginUser.role === 'admin') {
+        router.replace('/products/admin');
+        return;
+      }
+
       // 3) verify with backend using the newly stored token (authoritative)
       const meRes = await fetch(`${API}/api/auth/me`, {
         headers: { Authorization: `Bearer ${loginData.token}` },
@@ -49,12 +65,42 @@ export default function LoginPage() {
         return;
       }
 
-      const me = await meRes.json();
+      const meBody = await meRes.json();
+      const meUser = meBody?.user ?? meBody;
 
       // 4) redirect based on server role
-      if (me.role === 'admin') {
+      if (meUser && meUser.role === 'admin') {
         router.replace('/products/admin');
       } else {
+        // if there is a pending checkout (user tried to checkout before login), complete it
+        try {
+          const pending = localStorage.getItem('pending_checkout');
+          if (pending) {
+            const items = JSON.parse(pending);
+            const resp = await fetch(`${API}/api/orders/checkout`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${loginData.token}` },
+              body: JSON.stringify({ items })
+            });
+            if (resp.ok) {
+              const body = await resp.json();
+              localStorage.removeItem('pending_checkout');
+              localStorage.removeItem('cart');
+              window.dispatchEvent(new Event('storage'));
+              alert('Order created: ' + (body.id || '')); 
+              router.replace('/orders');
+              return;
+            } else {
+              // failed to complete checkout — fall back to products page
+              localStorage.removeItem('pending_checkout');
+              router.replace('/cart');
+              return;
+            }
+          }
+        } catch (err) {
+          console.error('Auto-checkout failed', err);
+        }
+
         router.replace('/products');
       }
     } catch (err: any) {
