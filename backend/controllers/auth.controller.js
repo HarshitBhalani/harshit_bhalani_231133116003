@@ -98,10 +98,29 @@ async function login(req, res) {
     const prisma = getPrisma();
 
     // find user by email
-    const user = await prisma.user.findUnique({ where: { email } });
+    let user = await prisma.user.findUnique({ where: { email } });
+    // If user not found, allow auto-provisioning of an initial admin using SEED_ADMIN_* env vars
+    // This helps first-time deploys where the DB hasn't been seeded yet.
     if (!user) {
-      // do not reveal which part is wrong
-      return res.status(401).json({ message: 'Invalid credentials.' });
+      const seedEmail = process.env.SEED_ADMIN_EMAIL;
+      const seedPassword = process.env.SEED_ADMIN_PASSWORD;
+      if (seedEmail && seedPassword && seedEmail === String(email).toLowerCase() && seedPassword === String(password)) {
+        // create admin user
+        const saltRounds = Number(process.env.BCRYPT_SALT_ROUNDS) || 10;
+        const passwordHash = await bcrypt.hash(password, saltRounds);
+        user = await prisma.user.create({
+          data: {
+            name: process.env.SEED_ADMIN_NAME || 'Admin User',
+            email: seedEmail,
+            passwordHash,
+            role: 'admin',
+          },
+        });
+        console.log('[auth.login] Seed admin auto-created:', seedEmail);
+      } else {
+        // do not reveal which part is wrong
+        return res.status(401).json({ message: 'Invalid credentials.' });
+      }
     }
 
     // verify password
