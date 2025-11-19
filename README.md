@@ -42,8 +42,8 @@ NeoShop is a full-stack e-commerce web application built following the MVC patte
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/<your-repo-name>.git
-cd <your-repo-name>
+git clone https://github.com/HarshitBhalani/harshit_bhalani_231133116003.git
+cd harshit_bhalani_231133116003
 ```
 
 ### 2. Backend Setup
